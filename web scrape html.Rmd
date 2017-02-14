@@ -1,0 +1,123 @@
+---
+title: "rvest web scraping"
+author: "John Van Camp"
+date: "May 2, 2016"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Here we use rvest (Hadley W) to scrape the webpage
+```{r}
+require(rvest)
+
+url <- "http://www.visitithaca.com/attractions/wineries.html"
+
+# open this in a browser
+browseURL(url)
+
+# we can check the encoding (UTF-8 in this case) 
+guess_encoding(url)
+
+# reading in the data
+urldata <- read_html(url)
+
+```
+
+### Extract Names ###
+Using firefox F12 we open the "Inspect Element" tool (or double click and inspect element)
+Inspection panel opens and we can select the element for "Treleaven by King Ferry Winery"
+In this case we find:
+    <div class="indSearchListingTitle"><a  
+    href="http://www.visitithaca.com/attractions/Treleaven-by-King-Ferry-Winery-298" title="" 
+    data-dtn-link="">Treleaven by King Ferry Winery</a></div>
+
+```{r}
+# Pull out the names of the wineries and breweries
+# we prefix the div class with a period for our search
+
+selector_name<-".indSearchListingTitle"
+
+fnames<-html_nodes(urldata, selector_name) %>%
+  html_text()
+
+head(fnames)
+# [1] "Lucas Vineyards"                            "Treleaven by King Ferry Winery"            
+# [3] "Sheldrake Point Vineyard"                   "Montezuma Winery & Hidden Marsh Distillery"
+# [5] "Cayuga Lake Wine Trail"                     "Buttonwood Grove Winery"     
+
+str(fnames)
+```
+
+### Extract Addresses ###
+The address is a little trickier. Using the select tool in the development tools you'll see that the address is within the element: .indMetaInfoWrapper
+  <div class="indMetaInfoWrapper">658 Lake Rd., King Ferry, NY 13081 
+  <div>class="indMetaInfoSep"></div></div>
+            
+.indMetaInfoWrapper
+```{r}
+selector_address<-".indMetaInfoWrapper"
+
+# taking a look and experimenting
+html_nodes(url,".indMetaInfoWrapper")  %>%  html_text(.)  %>% head()
+# we see some trimming is needed (default is trim=F)
+html_nodes(url,".indMetaInfoWrapper")  %>%  html_text(.,trim=T)  %>% head()
+
+# find two fields are returned address and phone and we want only the first
+# the address and phone are at the same level so we want every other one
+maxnode<-html_nodes(url,".indMetaInfoWrapper")  %>%  html_text(.,trim=T)  %>% length()
+keep<-seq(1,maxnode,2)  #the ones we will keep
+
+faddress<-html_nodes(url,".indMetaInfoWrapper")  %>%  html_text(.,trim=T)
+faddress<-faddress[keep]
+head(faddress)
+
+# more cleanup is needed (remove all the "on the ____ Trail")
+faddress<-faddress %>% gsub("on the .*Trail,","",.) %>%  gsub("Cayuga Lake Wine Trail,","",.)
+head(faddress)
+
+rm(maxnode,keep)
+```
+
+That cleans things up nicely.
+
+To finish let's remove all variables generated in this exercise
+```{r}
+rm(faddress,fnames,selector_address,selector_name,url)
+```
+
+###Table Example ###
+Lets use http://www.usingenglish.com/resources/wordcheck/list-dale-chall+list+of+simple+words.html
+We find the list of dale-chall words here which is a usefull list of simple words.
+
+.wraplist > ul:nth-child(1)
+
+```{r}
+url<-"http://www.usingenglish.com/resources/wordcheck/list-dale-chall+list+of+simple+words.html"
+
+# open this in a browser
+browseURL(url)
+
+urldata<-read_html(url)
+guess_encoding(url)
+# looks like we have some encoding problems to fix
+urldata<-read_html(url,encoding="UTF-8")
+
+selector<-".wraplist ul li"
+urldata %>% html_nodes(.,selector) %>% html_text() %>% head()
+# that works let's create a list
+Dale_Chall_list<-urldata %>% html_nodes(.,selector) %>% html_text()
+str(Dale_Chall_list)
+names(Dale_Chall_list)<-"words"
+
+# Great, let's output that to a file 
+write.csv(Dale_Chall_list,file = "/Users/John/Documents/R/_Johns Toolbox/Dale_Chall_Words.csv")
+```
+
+That was successful lets cleanup a bit
+```{r}
+rm(selector,url,urldata)
+```
+

@@ -1,0 +1,557 @@
+# Notes on R code
+Look up by section using the markdown chapter index
+
+```{r Delete all objects in current workspace}
+rm(list = ls())
+
+rm(list=grep('modelFcst',ls(),value=T))  #remove all objects matching the pattern 'modelFcst'
+```
+
+
+```{r Packages}
+# detach a specific package
+detach('package')
+
+# create list os installed packages
+mypkgs<-as.data.frame(installed.packages(),stringsAsFactors = F)
+readr::write_tsv(mypkgs,"/Users/John/Documents/R/mypkgs.tsv")         # Mac
+# readr::write_tsv(mypkgs,"C:/Users/jvancamp/Documents/R/mypkgs.tsv") # Win
+
+# Install packages from a list
+mypkgs<-readr::read_tsv("/Users/John/Documents/R/mypkgs.tsv")         # Mac
+# mypkgs<-readr::read_tsv("C:/Users/jvancamp/Documents/R/mypkgs.tsv") # Win
+sapply(mypkgs$Package,function(x) install.packages(x))
+
+```
+
+
+```{r controls }
+# for sometimes fails if no space after "for "
+# if x is data.frame or data.table seq.along(x) defaults along ncols, for nrow specify a column
+for (i in 1:10) {print('do stuff')}  
+for (i in 1:nrow(x)) {print('do stuff')}
+for (i in seq_along(x[,1])) {print('do stuff')}
+
+if(cond) expr
+if(cond) cons.expr else alt.expr
+while(cond) expr
+repeat expr
+ifelse(test, yes, no)
+
+```
+
+
+```{r Files}
+# Ctrl-Shift-H to choose directory
+# Command-O to open a file
+setwd("~/_Home/R-files Data Analysis/_Johns Toolbox")
+
+#Reading DBF files
+library("foreign", lib.loc="C:/Program Files/R/R-3.0.0/library")
+mydata<-read.dbf(choose.files())
+
+```
+
+
+```{r Split & sample data}
+#Split data & sample data (1:20 cut into 4 groups)
+x<-1:20
+y<-split(x,cut(x,4))
+#display first grouping, x in y[[1]]
+x[x %in% y[[1]]]
+#pulling a random sample of 10 w/o replacement
+y<-sample(x,10,replace=F)
+#display "x in y", "x not in y""
+x[x %in% y]
+x[!(x %in% y)]
+
+#expand grid will create a matrix applying all combinations of the inputs
+expand.grid(c("yes","no"),1:5)
+
+#combinations of inputs to a function
+outer(c(1,3,5),c(2,3,7),'*')
+# special operator %o% does the same thing c(1,3,5) %o% c(2,3,7)
+
+# Take a sample of size 1000 from the standard exponential
+rexp(1000,rate=1)
+# Take the mean of such a sample
+mean(rexp(1000,rate=1))
+# Draw 1000 such samples, and take the mean of each one
+replicate(1000,mean(rexp(1000),rate=1))
+# Plot the histogram of sample means
+hist(replicate(1000,mean(rexp(1000,rate=1))))
+
+# Conditions: Use if ...else and switch()
+# Iteration: Use for(), while() and repeat()
+
+#subset of data 
+newdata <-subset(x[,5],x[,3]<800 & (x[,2]=="400" | x[,2]=="500"))
+#subset based on variable values
+newdata <- mydata[ which(mydata$gender=='F'
+  & mydata$age > 65), ]
+# or
+attach(newdata)
+newdata <- mydata[ which(gender=='F' & age > 65),]
+detach(newdata) 
+
+```
+
+
+```{r Rescale Data}
+#scale data with sweep()
+x<-matrix(runif(100,1,2),20)
+x.max<-apply(x,2,function(x) max(x))  #max value of each column
+x.scale<-sweep(x,2,x.max,'/')   #scale by dividing each value by its column maximum
+```
+
+
+```{r Factors to strings}
+#converting strings as sfactors into charactor strings
+df[] <- lapply(df, as.character)
+```
+
+
+```{r Redirect Output}
+write.table(x,file="Q3events.txt")   #output dataframe to a file for later use
+x<-read.table(file="Q3events.txt")   #is used to recover that data
+sink("filename.txt")  #output redirected to file until another sink()
+
+#Supress output using SINK 
+f = file()
+sink(file=f) ## silence upcoming output using anonymous file connection
+# ... your code here ...
+sink() ## undo silencing
+close(f)
+
+#Graph/Plot to File / Output
+pdf("mygraph.pdf") 	          #pdf file
+win.metafile("mygraph.wmf") 	#windows metafile
+png("mygraph.png") 	          #png file
+jpeg("mygraph.jpg") 	        #jpeg file
+bmp("mygraph.bmp") 	          #bmp file
+postscript("mygraph.ps") 	    #postscript file
+#use (1)open device, (2)plot, (3)close device
+png("test.png")
+plot(x,y)
+dev.off()
+```
+
+
+```{r NAs Detect,Count,Exclude}
+
+#Find NAs Detect, Count or Exclude in our summary
+# *** USING DPLYR ***
+#Here we are reporting or excluding NAs using dplyr
+c<-data(mtcars)
+c[1,6]<-NA #assign this as NA
+#summarise_each applys to each column when no group_by is used
+summarise_each(c,funs(n=sum(!is.na(.))))
+#   mpg cyl disp hp drat wt qsec vs am gear carb
+# 1  32  32   32 32   32 31   32 32 32   32   32
+#same as the following
+c %>% summarise_each(.,funs(n=sum(is.na(.))))
+#   mpg cyl disp hp drat wt qsec vs am gear carb
+# 1   0   0    0  0    0  1    0  0  0    0    0
+
+#we can go further by grouping as shown below
+#group by gear and summarize the NA counts
+c %>% group_by(gear)  %>% summarise_each(.,funs(na=sum(is.na(.))))
+
+#group by gear and summarize counts excluding NAs
+c %>% group_by(gear)  %>% summarise_each(.,funs(na=sum(!is.na(.))))
+
+#we can do some of the same things with apply
+#here we use apply to look at each column and detect NAs
+#then apply again to sum each column to find the total NAs in each column
+# x is a dataframe of many columns containing some NAs
+apply(apply(x,2,is.na),2,sum)   #shows how many NAs in each column
+which(is.na(x[,1]))             #shows which ones are NA's in column 1
+apply(apply(j,2,is.na),2,sum) #example
+# Species     key   value 
+#       0       0       1 
+which(is.na(j[,3]))
+# [1] 155
+j[155,]
+# Source: local data frame [1 x 3]
+#   Species         key value
+#    (fctr)      (fctr) (dbl)
+# 1  setosa Sepal.Width   NaN
+
+#Find missing cases
+x<-iris
+x[25,2]<-NA  #create a missing case
+x %>% group_by(Species) %>% summarise_each(funs(missing=sum(!complete.cases(.))))
+#     Species Sepal.Length Sepal.Width Petal.Length Petal.Width
+#1     setosa            0           1            0           0
+#2 versicolor            0           0            0           0
+#3  virginica            0           0            0           0
+
+```
+
+
+```{r Complete Cases}
+# Complete Cases (eliminate missing data)
+x1 <-x[complete.cases(x),]
+table(complete.cases(x))  #check for complete cases with table 
+```
+
+
+```{r Cumulative probability}
+#cumulative probability where x is the position used in the calculation
+pnorm(x,mean=m, sd=s)
+# with cumsum() and data.table
+data_frame(x=c(1:20)) %>% mdt() %>% .[,cumsum(x)]
+```
+
+
+```{r Web files}
+#Read a file using a url
+x<-read.table(url("http://www.stats.uwo.ca/faculty/braun/data/rnf6080.dat"))
+```
+
+
+```{r Crosstabs & aggregation}
+#creating a crosstab from a subset of data
+xtabs(formula= ~., data=x[,562:563])
+
+#Format the output with dcast as follows
+library(reshape2)
+y[,-1] %>% group_by(Species,key) %>% summarise_each(funs(mean(val)))  %>% dcast(.,Species~key)
+#
+#     Species Sepal.Length Sepal.Width Petal.Length Petal.Width
+#1     setosa        5.006       3.428        1.462       0.246
+#2 versicolor        5.936       2.770        4.260       1.326
+#3  virginica        6.588       2.974        5.552       2.026
+#
+#
+#Doing the same thing with sqldf (SQL for data frames)
+#had to change the df names for compatibility as sqldf cant use the Sepal.Length format
+#  id  sl  sw  pl  pw species
+#1  1 5.1 3.5 1.4 0.2  setosa
+#2  2 4.9 3.0 1.4 0.2  setosa
+#3  3 4.7 3.2 1.3 0.2  setosa
+#
+sqldf("select species, count(id) as n,AVG(sl),AVG(sw),AVG(pl),AVG(pl) from x group by species")
+#     species  n AVG(sl) AVG(sw) AVG(pl) AVG(pl)
+#1     setosa 50   5.006   3.428   1.462   1.462
+#2 versicolor 50   5.936   2.770   4.260   4.260
+#3  virginica 50   6.588   2.974   5.552   5.552
+#
+#
+#Now using both we gather the dataframe with tidyr
+x %>% gather(key,val,-species,-id)->y
+head(y,3)
+#  id species key val
+#1  1  setosa  sl 5.1
+#2  2  setosa  sl 4.9
+#3  3  setosa  sl 4.7
+#now generate the report as before - the easiest example yet since it used key,val for all averages
+sqldf("select species,key,AVG(val) from y group by species, key") %>% dcast(.,species~key)
+#     species    sl    sw    pl    pw
+#1     setosa 5.006 3.428 1.462 0.246
+#2 versicolor 5.936 2.770 4.260 1.326
+#3  virginica 6.588 2.974 5.552 2.026
+
+#aggregate used to summarize data (by must be of type list)
+# aggregate(x, by, FUN, ..., simplify = TRUE)
+data(iris)
+aggregate(iris[,1:4],list(iris[,5]),mean)  #means by species returned in this example
+#     Group.1 Sepal.Length Sepal.Width Petal.Length Petal.Width
+#1     setosa        5.006       3.428        1.462       0.246
+#2 versicolor        5.936       2.770        4.260       1.326
+#3  virginica        6.588       2.974        5.552       2.026
+
+#using dplyr to aggregate
+library(dplyr)
+data(iris)
+y<-mdf(iris)  #from jvctools
+#That gives the output as a list of TRUE and FALSE counts (see below)
+y %>% group_by(Species) %>% summarise_each(funs(n=length))
+#     Species Sepal.Length Sepal.Width Petal.Length Petal.Width
+#1     setosa           50          50           50          50
+#2 versicolor           50          50           50          50
+#3  virginica           50          50           50          50
+x %>% group_by(Species) %>% summarise_each(funs(mean))
+#     Species Sepal.Length Sepal.Width Petal.Length Petal.Width
+#1     setosa        5.006       3.428        1.462       0.246
+#2 versicolor        5.936       2.770        4.260       1.326
+#3  virginica        6.588       2.974        5.552       2.026
+
+
+#summarizing data with doBy package
+library(doBy)
+str(mtcars)
+summaryBy(mpg~carb+cyl, data=mtcars, FUN=c(sum,mean,length))
+
+```
+
+
+```{r Functions}
+# Functions
+# can be nested (locally) in other functions
+
+# myfunction<-function( arglist ) {
+#   print('do stuff')
+#   return(value)
+# }
+break # exit the statement (i.e. current loop)
+next  # skip to next i (i.e. current loop)
+
+do.call(funname, args)  #executes a function call with args
+
+stopifnot(is.numeric(newdata)) #used to exit a function
+
+# recursion example
+# my.factorial <- function(n) {
+#   if (n == 1) {  # Base case
+#     return(1)
+#   } else {  # Recursion
+#     return(n*my.factorial(n-1))
+#   }
+# }
+
+```
+
+
+```{r purrr}
+# Using purrr
+# here we use map() to apply a linear model to mtcars split first by cyl {4,6,8}
+# note the use of broom::tidy to clean-up the output
+library(purrr)
+c<-mdf(data(mtcars))
+split(c,c$cyl) %>% map(~lm(.$mpg~.$wt)) %>% map(~broom::tidy(.))
+# is equivalent to
+c %>% split(.$cyl) %>% map(~ lm(mpg~wt,data=.x)) %>% map(~broom::tidy(.))
+
+dailyModels<-dailyModels %>% mutate(mtd=map_dbl(data,getMTD))
+```
+
+
+```{r Strings}
+# finding rows with substring matching (all rows of the 'Merc' cars in mtcars)
+mtcars[grepl('Merc',rownames(mtcars)),]
+
+substr(x, start=n1, stop=n2) 
+grep(pattern,x, value=FALSE, ignore.case=FALSE, fixed=FALSE)
+grepl(pattern,x, value=FALSE, ignore.case=FALSE, fixed=FALSE)
+sub(pattern, replacement, x, ignore.case=FALSE, fixed=FALSE)
+gsub(pattern, replacement, x, ignore.case=FALSE, fixed=FALSE)
+gregexpr(pattern, text, ignore.case=FALSE, perl=FALSE,
+fixed=FALSE)
+strsplit(x, split)
+paste("a","b", sep="", collapse=NULL)
+sprintf(fmt,"a string")
+toupper/tolower(x)
+nchar(x)
+
+# stringr::
+str_extract #extract first match
+str_extract_all #extract all matches
+str_replace #replace first match
+str_replace_all
+str_split_fixed  #splits into fixed number of substrings
+str_split  #splits into variable number of substrings 
+str_detect  #detect presence or absense of a pattern
+str_match  #captures groups formed by () from first match
+str_match_all  #captures groups formed by () from all matches
+str_locate  #locates the first position of a pattern returns matrix of start & end
+str_c #like paste0()
+str_length #like nchar()
+str_sub  #like substr()
+str_str  #like substr but understands negative indices
+str_dub  #duplicate the characters within a string
+str_trim  #remove leading+tailing whitespace
+str_pad  #pad string with extra whitespace right,left, or both
+
+```
+
+
+```{r ggplot2 tips & tricks}
+#ggplot2 changing legend title
+p<-ggplot()+geom_other_stuff
+p$labels$colour<-"Put Legend Title Here"
+p  # to plot the result
+
+# New title,subtitle,caption
+labs(title = "my title", subtitle = "my subtitle", caption = "my caption")
+# Now left aligned center by using
+theme(plot.title = element_text(hjust = 0.5))
+
+# secondary axis (must be a 1:1 transformation of primary axis)
+scale_y_continuous("mpg (US)", sec.axis = sec_axis(~ . * 1.20, name = "mpg (UK)"))
+
+# columns & stacked columns
+geom_col() #which is short-hand for geom_bar(stat = "identity")
+ggplot(avg_price) + 
+  geom_col(aes(x = cut, y = price_rel, fill = color))
+
+# facets
+# can now use functions in facetting formulas
+facet_wrap(~cut_number(depth, 6))
+
+
+# using theme to center align title & subtitle 
+ggplot(trash,aes(date,value))+geom_line(col='red',size=1)+geom_point(col='red')+
+  geom_line(aes(y=fitted),col='blue',size=1)+geom_point(aes(y=fitted),col='blue')+
+  geom_line(aes(y=forecast),size=1)+geom_point(aes(y=forecast),col='black')+
+  geom_ribbon(aes(ymin=lo80,ymax=hi80),alpha=.2)+
+  geom_ribbon(aes(ymin=lo95,ymax=hi95),alpha=.1)+
+  expand_limits(y=c(150000,350000))+
+  theme_bw()+theme(plot.title=element_text(hjust=0.5),plot.subtitle=element_text(hjust=0.5))+
+  labs(title=mytitle, subtitle=mysubtitle,x="Date",y="Sales Revenue")
+
+# ggcl() "center labs" add this to a plot +ggcl() to center all labels except the caption
+# ggcl<-function(){
+#   theme(plot.title=element_text(hjust=0.5),plot.subtitle=element_text(hjust=0.5))
+# }
+
+
+```
+
+
+```{r BoxCox}
+# Box Cox  - generate tmp and plot the limits of the lambda interval for transformation
+# Think about the data and choose.  Here interval includes 1/2 so why exclude squareroot?
+set.seed(43)
+tmp <- exp(rnorm(10))
+out <- MASS::boxcox(lm(tmp~1))
+range(out$x[out$y > max(out$y)-qchisq(0.95,1)/2])
+# [1] -0.4646465  1.3131313
+max(out$x[out$y==max(out$y)])
+# [1] 0.3838384
+
+```
+
+
+```{r SQL operations}
+# Example of a 1st query into hash table followed by a 2nd query.
+
+defl()
+library(RODBC)
+require(magrittr)
+require(lubridate)
+
+edate<-today()-days(1)
+edate<-"'" %S% edate %S% "'"
+
+# 1st query creates #temp (#temp available until connection is closed via ODBCclose())
+myq<-paste(
+  "SELECT",
+  "   CONVERT(VARCHAR(7),[dateStamp],111) as [mdate]",
+  "   ,[amount]",
+  "   ,[userCompanyName]",
+  "   ,[channelCategory]",
+  "   ,[productCategory]",
+  "   ,CASE WHEN m.[PrettyName] IS NULL THEN m.[MRRSubCategory] ELSE m.[PrettyName] END as [MRR]",
+  "INTO #temp",
+  "FROM",
+  "   [CommissionsDataMart].[Revenue].[FactRevenueSummaryBreakdownAdjusted] as r",
+  "   LEFT JOIN  [CommissionsDataMart].[Commissions].[DimChannelCategories] as c",
+  "   ON r.[ChannelSubCategoryID]=c.[ChannelSubCategoryID]",
+  "   LEFT JOIN  [CommissionsDataMart].[General].[DimRevenueCategories] as m",
+  "   ON r.[MRRSubCategoryID]=m.[MRRSubCategoryID]",
+  "WHERE",
+  "   r.[MRRSubCategoryID] in (23,24,26,27,47,11,12,14,14,49)",
+  "   AND dateStamp >= '2014-01-01' AND dateStamp < " %S% edate
+)
+
+
+# open link to FinanceDataMart and execute first query
+fdm <- odbcDriverConnect('driver={SQL Server};server=sqldw-co-4.wh.intermedia.net;database=FinanceDataMart;trusted_connection=true')
+
+sqlQuery(fdm,myq)
+
+myq<-paste(
+  "SELECT ",
+  "    [mdate] as [date]",
+  "   ,sum([amount]) as [amount]",
+  "   ,[MRR]",
+  "   ,[userCompanyName]",
+  "   ,[channelCategory]",
+  "   ,[productCategory]",
+  "FROM #temp",
+  "GROUP BY [mdate],[MRR],[userCompanyName],[channelCategory],[productCategory]"
+)
+
+myr <- sqlQuery(fdm,myq)
+myr %>% head()
+odbcClose(fdm)
+
+```
+
+
+```{r machine learning}
+# Linear Regression
+# Train the model using the training sets and check score
+linear <- lm(y_train ~ ., data = x)
+summary(linear)
+predicted= predict(linear,x_test) 
+
+# Logistic Regression
+# Train the model using the training sets and check score
+logistic <- glm(y_train ~ ., data = x,family='binomial')
+summary(logistic)
+predicted= predict(logistic,x_test)
+
+# Decision Tree
+# https://www.analyticsvidhya.com/blog/2016/04/complete-tutorial-tree-based-modeling-scratch-in-python/
+fit <- rpart(y_train ~ ., data = x,method="class")
+summary(fit)
+predicted= predict(fit,x_test)
+
+# SVM (Support Vector Machine)
+# https://www.analyticsvidhya.com/blog/2014/10/support-vector-machine-simplified/
+library(e1071)
+fit <-svm(y_train ~ ., data = x)
+summary(fit)
+predicted= predict(fit,x_test)
+
+# Naive Bayes
+# https://en.wikipedia.org/wiki/Bayes%27_theorem
+library(e1071)
+fit <-naiveBayes(y_train ~ ., data = x)
+summary(fit)
+predicted= predict(fit,x_test)
+
+# KNN (K- Nearest Neighbors)
+library(knn)
+fit <-knn(y_train ~ ., data = x,k=5)
+summary(fit)
+predicted= predict(fit,x_test)
+
+# K-Means
+# https://www.r-bloggers.com/k-means-clustering-in-r/
+library(cluster)
+fit <- kmeans(X, 3) # 5 cluster solution
+
+# Random Forest
+library(randomForest)
+fit <- randomForest(Species ~ ., x,ntree=500)
+summary(fit)
+predicted= predict(fit,x_test)
+# help found as follows:
+# https://www.analyticsvidhya.com/blog/2014/06/introduction-random-forest-simplified/
+# https://www.analyticsvidhya.com/blog/2014/06/comparing-cart-random-forest-1/
+# https://www.analyticsvidhya.com/blog/2014/06/comparing-random-forest-simple-cart-model/
+# https://www.analyticsvidhya.com/blog/2015/06/tuning-random-forest-model/
+
+# Dimensionality Reduction Algorithms
+library(stats)
+pca <- princomp(train, cor = TRUE)
+train_reduced  <- predict(pca,train)
+test_reduced  <- predict(pca,test)
+# see for help
+# https://www.analyticsvidhya.com/blog/2015/07/dimension-reduction-methods/
+
+# Gradient Boosting & AdaBoost
+# https://www.analyticsvidhya.com/blog/2015/05/boosting-algorithms-simplified/
+# http://discuss.analyticsvidhya.com/t/what-is-the-fundamental-difference-between-randomforest-and-gradient-boosting-algorithms/2341
+library(caret)
+fitControl <- trainControl( method = "repeatedcv", number = 4, repeats = 4)
+fit <- train(y ~ ., data = x, method = "gbm", trControl = fitControl,verbose = FALSE)
+predicted= predict(fit,x_test,type= "prob")[,2] 
+
+
+```
+
+

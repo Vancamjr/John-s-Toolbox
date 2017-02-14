@@ -1,0 +1,49 @@
+---
+title: "Packages after R Upgrade"
+author: "John Van Camp"
+date: "1/25/2017"
+output: html_document
+---
+## Upgrade R for Mac & RStudio
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+To save and reinstall packages from an old version of R to a new one.
+In the old version type:
+```{r}
+tmp <- installed.packages()
+installedpkgs = as.data.frame(installed.packages(.libPaths()[1]), stringsAsFactors = F)
+save(installedpkgs, file="installed_old.rda")
+```
+
+Install the most recent version of R:
+Download the most recent version of R from The Comprehensive R Archive Network (CRAN)
+
+Install BioConductor packages using the biocLite.R installation script.
+In an R command window, type the following:
+```{r}
+source("http://bioconductor.org/biocLite.R")
+chooseBioCmirror()
+biocLite()
+# If you have other Bioconductor packages missing from the old installation:
+load("installed_old.rda")
+tmp <- installed.packages()
+installedpkgs.new <- as.vector(tmp[is.na(tmp[,"Priority"]), 1])
+missing <- setdiff(installedpkgs, installedpkgs.new)
+for (i in 1:length(missing)) biocLite(missing[i])
+```
+
+Re-install the missing packages from CRAN:
+```{r}
+load("installed_old.rda")
+tmp <- installed.packages()
+installedpkgs.new <- as.vector(tmp[is.na(tmp[,"Priority"]), 1])
+missing <- setdiff(installedpkgs, installedpkgs.new)
+install.packages(missing)
+update.packages()
+```
+
+If you find your X11 broken after the installation procedure (it happens every time to me, at least on Leopard) install the XQuartz App from here.
+

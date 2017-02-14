@@ -1,0 +1,121 @@
+---
+title: "Packages after R Upgrade"
+author: "John Van Camp"
+date: "1/25/2017"
+output: html_document
+---
+## Upgrade R for Mac & RStudio
+Upgrading RStudio is easy, just download and replace the current vesions (Mac) and you're good to go.
+
+Updating R is a bit more tricky
+First we save a list of all installed packages so they aren't lost
+```{r}
+mypkgs<-as.data.frame(installed.packages(),stringsAsFactors = F)
+readr::write_tsv(mypkgs,"/Users/John/Documents/R/mypkgs.tsv")         # Mac
+# readr::write_tsv(mypkgs,"C:/Users/jvancamp/Documents/R/mypkgs.tsv") # Win
+```
+
+So, in order to install R,
+1.	go to http://www.r-project.org, 
+2.	click on 'CRAN', 
+3.	then choose the CRAN site that you like. I like Kansas: http://rweb.quant.ku.edu/cran/.
+4.	click on 'Download R for XXX' [where XXX is your operating system]
+5.	follow the installation procedure for your operating system
+6.	resart RStudio
+7.	rejoice
+
+--wait - what about my beloved packages??--
+ok, I use a Mac, so I can only provide accurate details for the Mac - perhaps someone else can provide the accurate paths for windows/linux; I believe the process will be the same.
+
+To ensure that your packages work with your shiny new version of R, you need to:
+
+1.  move the packages from the old R installation into the new version; on Mac OSX, 
+    this means moving all folders from here:
+    /Library/Frameworks/R.framework/Versions/2.15/Resources/library
+    to here:
+    /Library/Frameworks/R.framework/Versions/3.0/Resources/library
+
+[where you'll replace "2.15" and "3.0" with whatever versions you're upgrading from and to. And only copy whatever packages aren't already in the destination directory. i.e. don't overwrite your new 'base' package with your old one - if you did, don't worry, we'll fix it in the next step anyway. If those paths don't work for you, try using installed.packages() to find the proper pathnames.]
+
+2.	now you can update your packages by typing update.packages() in your RStudio console, and answering 'y' to all of the prompts.
+```{r}
+update.packages()
+```
+Example
+> update.packages(checkBuilt=TRUE) class :  Version 7.3-7 installed in /Library/Frameworks/R.framework/Versions/3.0/Resources/library   Version 7.3-8 available at http://cran.rstudio.com Update (y/N/c)?  y ---etc---
+
+3.	finally, to reassure yourself that you have done everything, type these two commands in the RStudio console to see what you've got:
+```{r}
+version 
+cat("---------------------------------------------------------------------------------------","\n")
+packageStatus()
+```
+
+Note:  I note for others that your personal library of R packages on OSX might alternatively be located under ~/Library/R instead of /Library/Frameworks/...
+
+
+****************************************************************************************************
+more on package updates from alternative source(s)
+****************************************************************************************************
+
+To reinstall packages from an old version of R to a new one.
+In the old version type:
+```{r, echo=TRUE, message=TRUE, warning=TRUE}
+# readr must be installed for this step, if not do it manually
+mypkgs<-readr::read_tsv("/Users/John/Documents/R/mypkgs.tsv")
+# this is used to exclude base packages
+# installedpkgs <- as.data.frame(installed.packages(),stringsAsFactors = F)[is.na(temp$Priority), 1]
+installedpkgs <- as.data.frame(installed.packages(),stringsAsFactors = F)
+missingpkgs <- setdiff(mypkgs, installedpkgs)
+cat("missing #",mdt(missingpkgs)[,.N])
+mdt(missingpkgs)[,.(Package,Compile=NeedsCompilation,Built)]
+
+# don't check entire dataframe when looking at missing packages
+cat("\n\n","Missing Package only:\n")
+missingpkgs <- setdiff(mypkgs$Package, installedpkgs$Package)
+cat("missing #",mdt(missingpkgs)[,.N])
+mdt(missingpkgs)[,.(.I,Package)] 
+```
+
+To install the missing packages
+```{r}
+if(!is.null(nrow(missingpkgs))){
+  sapply(missingpkgs$Package,function(x) install.packages(x))
+}
+update.packages()
+
+# check again for missing items
+installedpkgs <- as.data.frame(installed.packages(),stringsAsFactors = F)
+missingpkgs <- setdiff(mypkgs$Package, installedpkgs$Package)
+cat("missing #",mdt(missingpkgs)[,.N])
+if(!is.null(nrow(missingpkgs))){mdt(missingpkgs)[,.(Package,Compile=NeedsCompilation,Built)]}
+
+```
+
+
+Install BioConductor packages using the biocLite.R installation script.
+In an R command window, type the following:
+```{r}
+source("http://bioconductor.org/biocLite.R")
+chooseBioCmirror()
+biocLite()
+# If you have other Bioconductor packages missing from the old installation:
+load("installed_old.rda")
+tmp <- installed.packages()
+installedpkgs.new <- as.vector(tmp[is.na(tmp[,"Priority"]), 1])
+missing <- setdiff(installedpkgs, installedpkgs.new)
+for (i in 1:length(missing)) biocLite(missing[i])
+```
+
+Re-install the missing packages from CRAN:
+```{r}
+load("installed_old.rda")
+tmp <- installed.packages()
+installedpkgs.new <- as.vector(tmp[is.na(tmp[,"Priority"]), 1])
+missing <- setdiff(installedpkgs, installedpkgs.new)
+install.packages(missing)
+update.packages()
+```
+
+If you find your X11 broken after the installation procedure (it happens every time to me, at least on Leopard) install the XQuartz App from here.
+
