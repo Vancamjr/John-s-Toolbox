@@ -40,6 +40,17 @@ ifelse(test, yes, no)
 
 ```
 
+```{r Excel}
+
+# read excel namedRange using RJava
+library(RJava)
+excelfile <- system.file("test.xlsx", package="XLConnect")
+wb <- loadWorkbook(excelfile)
+data<- readNamedRegion(wb, name="alldata")
+
+```
+
+
 
 ```{r Files}
 # Ctrl-Shift-H to choose directory
