@@ -12,14 +12,15 @@ rm(list=grep('modelFcst',ls(),value=T))  #remove all objects matching the patter
 # detach a specific package
 detach('package')
 
+
 # create list os installed packages
 mypkgs<-as.data.frame(installed.packages(),stringsAsFactors = F)
-readr::write_tsv(mypkgs,"/Users/John/Documents/R/mypkgs.tsv")         # Mac
-# readr::write_tsv(mypkgs,"C:/Users/jvancamp/Documents/R/mypkgs.tsv") # Win
+readr::write_tsv(mypkgs,"/Users/John/Documents/R/_Johns Toolbox/mypkgs.tsv")         # Mac
+# readr::write_tsv(mypkgs,"C:/Users/jvancamp/Documents/R/_Johns Toolbox/mypkgs.tsv") # Win
 
 # Install packages from a list
-mypkgs<-readr::read_tsv("/Users/John/Documents/R/mypkgs.tsv")         # Mac
-# mypkgs<-readr::read_tsv("C:/Users/jvancamp/Documents/R/mypkgs.tsv") # Win
+mypkgs<-readr::read_tsv("/Users/John/Documents/R/_Johns Toolbox/mypkgs.tsv")         # Mac
+# mypkgs<-readr::read_tsv("C:/Users/jvancamp/Documents/R/_Johns Toolbox/mypkgs.tsv") # Win
 sapply(mypkgs$Package,function(x) install.packages(x))
 
 ```
