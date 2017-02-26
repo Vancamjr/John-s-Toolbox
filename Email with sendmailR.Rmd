@@ -1,0 +1,85 @@
+---
+title: "Send Email - sendmailR"
+author: "John Van Camp"
+date: "2/25/2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+## Sending email with mailR
+```{r}
+library(mailR)
+
+sender<-"vancamp.john@gmail.com"
+recipients<-c("john@van-camp.com")
+
+email<-send.mail(from=sender,
+                 to=recipients,
+                 subject="test",
+                 body="this is the body",
+                 smtp=list(host.name="smtp.gmail.com",user.name="vancamp.john@gmail.com",password="Snowball@54321"),
+                 authenticate = F,send=F)
+
+email$send()
+
+
+```
+
+
+## Sending email with sendmailR
+```{r}
+library(sendmailR)
+
+# make a plot as mime_part
+smtp = list(host.name = "smtp.gmail.com", port = 465,
+                        ssl=TRUE, user.name = "rstatswork@gmail.com",
+                        passwd = "Photon123")
+
+from = "rstatswork@gmail.com"
+to = c("john@van-camp.com")
+subject = "Test email"
+body="just a test"
+send.mail(from, to, subject, body, smtp=smtp, authenticate = TRUE, send = TRUE)
+
+# ******************************************************************************
+# attachments
+send.mail(from = "rstatswork@gmail.com",
+          to = c("john@van-camp.com"),
+          subject = "Subject attachment example",
+          body = "<html>The apache logo - <img src=\"http://www.apache.org/images/asf_logo_wide.gif\"></html>",
+          html = TRUE,
+          smtp = smtp,
+          attach.files = c("/Users/John/Documents/R/explore/test_report.pdf"),
+          authenticate = TRUE,
+          send = TRUE)
+
+```
+
+## Reporting with Email
+Render RMD document & email it
+```{r}
+# 1. render report
+library(rmarkdown)
+setwd("/Users/John/Documents/R/jvctools")
+rmarkdown::render("test_report.Rmd")
+
+# 2. email report
+library(sendmailR)
+smtp = list(host.name = "smtp.gmail.com", port = 465,
+                        ssl=TRUE, user.name = "rstatswork@gmail.com",
+                        passwd = "Photon123")
+from = "rstatswork@gmail.com"
+to = c("john@van-camp.com")
+subject = "Test email"
+body="<html><h2>Forecast Email Report</h2></html>"
+filelist= c("/Users/John/Documents/R/explore/test_report.pdf")
+send.mail(from, to, subject, body, html=T, attach.files=filelist, 
+          smtp=smtp, authenticate = TRUE, send = TRUE)
+
+
+```
+
