@@ -26,7 +26,7 @@ sapply(mypkgs$Package,function(x) install.packages(x))
 ```
 
 
-```{r program flow control }
+```{r Controls Prgm Flow }
 # for sometimes fails if no space after "for "
 # if x is data.frame or data.table seq.along(x) defaults along ncols, for nrow specify a column
 for (i in 1:10) {print('do stuff')}  
@@ -40,13 +40,13 @@ repeat expr
 ifelse(test, yes, no)
 
 # ifelse
-setgroups<-function(MRRid){
-  ifelse(MRRid %in% c(28),rgroup<-'Starting MRR',
-  ifelse(MRRid %in% c(26,47,24,23,27,14,49,12),rgroup<-'Net New Bookings MRR',
-  ifelse(MRRid %in% c(21,59,61),rgroup<-'Write-off & UBV Reversal',
-    rgroup<-"")))
-  return(rgroup)
-}
+# setgroups<-function(MRRid){
+#   ifelse(MRRid %in% c(28),rgroup<-'Starting MRR',
+#   ifelse(MRRid %in% c(26,47,24,23,27,14,49,12),rgroup<-'Net New Bookings MRR',
+#   ifelse(MRRid %in% c(21,59,61),rgroup<-'Write-off & UBV Reversal',
+#     rgroup<-"")))
+#   return(rgroup)
+# }
 
 # vectorize a function
 setgroups<-Vectorize(setgroups)
