@@ -21,8 +21,9 @@ email<-send.mail(from=sender,
                  to=recipients,
                  subject="test",
                  body="this is the body",
-                 smtp=list(host.name="smtp.gmail.com",user.name="vancamp.john@gmail.com",password="Snowball@54321"),
-                 authenticate = F,send=F)
+                 smtp=list(host.name="smtp.gmail.com",
+                      user.name="rstatswork@gmail.com",password="IttyBitty1"),
+                      authenticate = F,send=F)
 
 email$send()
 
@@ -37,7 +38,7 @@ library(sendmailR)
 # make a plot as mime_part
 smtp = list(host.name = "smtp.gmail.com", port = 465,
                         ssl=TRUE, user.name = "rstatswork@gmail.com",
-                        passwd = "Photon123")
+                        passwd = "IttyBitty1")
 
 from = "rstatswork@gmail.com"
 to = c("john@van-camp.com")

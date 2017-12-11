@@ -9,9 +9,12 @@ rm(list=grep('modelFcst',ls(),value=T))  #remove all objects matching the patter
 
 
 ```{r Packages}
+
+# set number cores to 2 for faster installation
+options(Ncpus = 2)
+
 # detach a specific package
 detach('package')
-
 
 # create list os installed packages
 mypkgs<-as.data.frame(installed.packages(),stringsAsFactors = F)
@@ -62,7 +65,6 @@ wb <- loadWorkbook(excelfile)
 data<- readNamedRegion(wb, name="alldata")
 
 ```
-
 
 
 ```{r Files}
@@ -378,7 +380,7 @@ str_split  #splits into variable number of substrings
 str_detect  #detect presence or absense of a pattern
 str_match  #captures groups formed by () from first match
 str_match_all  #captures groups formed by () from all matches
-str_locate  #locates the first position of a pattern returns matrix of start & end
+str_locate  #locates the first position of a pattern returns start & end
 str_c #like paste0()
 str_length #like nchar()
 str_sub  #like substr()
@@ -391,14 +393,42 @@ str_pad  #pad string with extra whitespace right,left, or both
 
 
 ```{r ggplot2 tips & tricks}
-#ggplot2 changing legend title
-p<-ggplot()+geom_other_stuff
-p$labels$colour<-"Put Legend Title Here"
-p  # to plot the result
-
 # New title,subtitle,caption
+ggtitle("my title",subtitle = "my subtitle")
 labs(title = "my title", subtitle = "my subtitle", caption = "my caption")
+labs(x="my x axis",y="my y axis")
+xlab("my x axis")
+ylab("my y axis")
+
+# Legend Modifications
+# see:  http://www.cookbook-r.com/Graphs/Legends_(ggplot2)/
+p <- ggplot(df1, aes(x=time, y=value, 
+       group=z, shape=z, colour=z)) + geom_line() + geom_point()
+# change legend name using color only
+p+scale_color_discrete(name  ="Month")
+# reverse the order
+scale_fill_discrete(guide = guide_legend(reverse=TRUE))
+# Kinds of scales
+# There are many kinds of scales. They take the form scale_xxx_yyy. 
+# Here are some commonly-used values of xxx and yyy:
+# xxx 	      Description
+# colour 	    Color of lines and points
+# fill 	      Color of area fills (e.g. bar graph)
+# linetype 	  Solid/dashed/dotted lines
+# shape 	    Shape of points
+# size 	      Size of points
+# alpha 	    Opacity/transparency
+#
+# yyy 	      Description
+# hue 	      Equally-spaced colors from the color wheel
+# manual 	    Manually-specified values (e.g., colors, point shapes, line types)
+# gradient 	  Color gradient
+# grey 	      Shades of grey
+# discrete 	  Discrete values (e.g., colors, shapes, line, sizes)
+# continuous 	Continuous values (e.g., alpha, colors, point sizes)
+
 # Now left aligned center by using
+p+ggcl()  # function in jvctools
 theme(plot.title = element_text(hjust = 0.5))
 
 # secondary axis (must be a 1:1 transformation of primary axis)
@@ -413,22 +443,27 @@ ggplot(avg_price) +
 # can now use functions in facetting formulas
 facet_wrap(~cut_number(depth, 6))
 
+# Format labels using theme
+# plot.title, axis.title (both), axis.title.x, axis.title.y
+p+theme(plot.title = element_text(
+  family = "Trebuchet MS", color="#666666", face="bold", size=22, hjust=0)) +
+  theme(axis.title = element_text(
+    family = "Trebuchet MS", color="#666666",face="bold", size=16))
 
-# using theme to center align title & subtitle 
-ggplot(trash,aes(date,value))+geom_line(col='red',size=1)+geom_point(col='red')+
-  geom_line(aes(y=fitted),col='blue',size=1)+geom_point(aes(y=fitted),col='blue')+
-  geom_line(aes(y=forecast),size=1)+geom_point(aes(y=forecast),col='black')+
-  geom_ribbon(aes(ymin=lo80,ymax=hi80),alpha=.2)+
-  geom_ribbon(aes(ymin=lo95,ymax=hi95),alpha=.1)+
-  expand_limits(y=c(150000,350000))+
-  theme_bw()+theme(plot.title=element_text(hjust=0.5),plot.subtitle=element_text(hjust=0.5))+
-  labs(title=mytitle, subtitle=mysubtitle,x="Date",y="Sales Revenue")
+# Publication ready plots with ggpubr
+library(ggpubr)
 
-# ggcl() "center labs" add this to a plot +ggcl() to center all labels except the caption
-# ggcl<-function(){
-#   theme(plot.title=element_text(hjust=0.5),plot.subtitle=element_text(hjust=0.5))
-# }
-
+# Arrange multiple plots on a page [example: p1,p2,p3]
+# using ggpubr
+ggpubr::ggarrange(p1,p2,p3+rremove("x.text"),
+              labels = c("A","B","C"),nrow=2,ncol=2)
+# using cowplot
+cowplot::plot_grid(p1,p2,p3+rremove("x.text"), 
+          labels = c("A", "B", "C"),
+          ncol = 2, nrow = 2)
+# using gridExtra
+gridExtra::grid.arrange(p1,p1,p3+rremove("x.text"), 
+             ncol = 2, nrow = 2)
 
 ```
 
