@@ -1,0 +1,75 @@
+---
+title: "tweet_shot"
+author: "John Van Camp"
+date: "12/31/2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+A Twitter discussion:
+
+    I'm going to keep my eyes out for this one! Would love to have an easy way to embed tweets in Rmd talks!
+
+    — Jeff Hollister (@jhollist) December 30, 2017
+
+that spawned from Maëlle’s recent look-back post turned into a quick function for capturing an image of a Tweet/thread using webshot, rtweet, magick and glue.
+
+Pass in a status id or a twitter URL and the function will grab an image of the mobile version of the tweet.
+
+The ultimate goal is to make a function that builds a tweet using only R and magick. This will have to do until the new year.
+
+```{r message=FALSE, warning=FALSE}
+
+require(glue, quietly=TRUE)
+require(rtweet, quietly=TRUE)
+require(magick, quietly=TRUE)
+require(webshot, quietly=TRUE)
+
+tweet_shot <- function(statusid_or_url, zoom=3) {
+  
+  x <- statusid_or_url[1]
+
+  is_url <- grepl("^http[s]://", x)
+
+  if (is_url) {
+
+    is_twitter <- grepl("twitter", x)
+    stopifnot(is_twitter)
+
+    is_status <- grepl("status", x)
+    stopifnot(is_status)
+
+    already_mobile <- grepl("://mobile\\.", x)
+    if (!already_mobile) x <- sub("://twi", "://mobile.twi", x)
+
+  } else {
+
+    x <- rtweet::lookup_tweets(x)
+    stopifnot(nrow(x) > 0)
+    x <- glue_data(x, "https://mobile.twitter.com/{screen_name}/status/{status_id}")
+
+  }
+
+  tf <- tempfile(fileext = ".png")
+  on.exit(unlink(tf), add=TRUE)
+
+  webshot(url=x, file=tf, zoom=zoom)
+
+  img <- image_read(tf)
+  img <- image_trim(img)
+
+  if (zoom > 1) img <- image_scale(img, scales::percent(1/zoom))
+
+  img
+
+}
+
+```
+
+Example of use:
+```{r}
+tweet_shot("https://twitter.com/jhollist/status/947082036019388416")
+```

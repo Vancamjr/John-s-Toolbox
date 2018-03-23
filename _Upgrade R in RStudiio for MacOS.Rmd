@@ -18,7 +18,8 @@ readr::write_tsv(mypkgs,"/Users/John/Documents/R/mypkgs.tsv")         # Mac
 So, in order to install R,
 1.	go to http://www.r-project.org, 
 2.	click on 'CRAN', 
-3.	then choose the CRAN site that you like. I like Kansas: http://rweb.quant.ku.edu/cran/.
+3.	then choose the CRAN site that you like. I like Kansas:   
+    http://rweb.quant.ku.edu/cran/.
 4.	click on 'Download R for XXX' [where XXX is your operating system]
 5.	follow the installation procedure for your operating system
 6.	resart RStudio

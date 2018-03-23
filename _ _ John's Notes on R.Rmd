@@ -2,14 +2,26 @@
 Look up by section using the markdown chapter index
 
 ```{r Delete all objects in current workspace}
-rm(list = ls())
+# rm(list = ls())
+# setwd("~/Documents/R/DVC Class")
+# rm(list=grep('modelFcst',ls(),value=T))  #remove all objects matching the pattern 'modelFcst'
+```
 
-rm(list=grep('modelFcst',ls(),value=T))  #remove all objects matching the pattern 'modelFcst'
+```{r Update R}
+# update to the latest version of R easily
+
+# Windows:  InstallR package from Tal galilli
+# https://cran.r-project.org/web/packages/installr/installr.pdf
+# avaialable via Cran
+
+# Mac & Linux
+# install.packages("devtools")
+# devtools::install_github("AndreaCirilloAC/updateR")
+# updateR(admin_password = "PASSWORD")
 ```
 
 
 ```{r Packages}
-
 # set number cores to 2 for faster installation
 options(Ncpus = 2)
 
@@ -57,13 +69,24 @@ setgroups<-Vectorize(setgroups)
 ```
 
 ```{r Excel}
-
 # read excel namedRange using RJava
 library(RJava)
 excelfile <- system.file("test.xlsx", package="XLConnect")
 wb <- loadWorkbook(excelfile)
 data<- readNamedRegion(wb, name="alldata")
 
+```
+
+```{r Scheduler}
+# automatic scheduling/execution of r scripts 
+
+# For Linux & Mac
+# https://github.com/bnosac/cronR
+library(cronR) 
+
+# For Windows
+# https://github.com/bnosac/taskscheduleR
+library(taskscheduleR)
 ```
 
 
