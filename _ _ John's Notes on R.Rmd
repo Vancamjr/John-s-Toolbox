@@ -68,6 +68,85 @@ setgroups<-Vectorize(setgroups)
 
 ```
 
+
+```{r Functions}
+# Functions
+# can be nested (locally) in other functions
+
+# myfunction<-function( arglist ) {
+#   print('do stuff')
+#   return(value)
+# }
+break # exit the statement (i.e. current loop)
+next  # skip to next i (i.e. current loop)
+
+do.call(funname, args)  #executes a function call with args
+
+stopifnot(is.numeric(newdata)) #used to exit a function
+
+# recursion example
+# my.factorial <- function(n) {
+#   if (n == 1) {  # Base case
+#     return(1)
+#   } else {  # Recursion
+#     return(n*my.factorial(n-1))
+#   }
+# }
+
+```
+
+
+```{r Strings}
+# finding rows with substring matching (all rows of the 'Merc' cars in mtcars)
+mtcars[grepl('Merc',rownames(mtcars)),]
+
+substr(x, start=n1, stop=n2) 
+grep(pattern,x, value=FALSE, ignore.case=FALSE, fixed=FALSE)
+grepl(pattern,x, value=FALSE, ignore.case=FALSE, fixed=FALSE)
+sub(pattern, replacement, x, ignore.case=FALSE, fixed=FALSE)
+gsub(pattern, replacement, x, ignore.case=FALSE, fixed=FALSE)
+gregexpr(pattern, text, ignore.case=FALSE, perl=FALSE,
+fixed=FALSE)
+strsplit(x, split)
+paste("a","b", sep="", collapse=NULL)
+sprintf(fmt,"a string")
+toupper/tolower(x)
+nchar(x)
+
+# stringr::
+str_extract #extract first match
+str_extract_all #extract all matches
+str_replace #replace first match
+str_replace_all
+str_split_fixed  #splits into fixed number of substrings
+str_split  #splits into variable number of substrings 
+str_detect  #detect presence or absense of a pattern
+str_match  #captures groups formed by () from first match
+str_match_all  #captures groups formed by () from all matches
+str_locate  #locates the first position of a pattern returns start & end
+str_c #like paste0()
+str_length #like nchar()
+str_sub  #like substr()
+str_str  #like substr but understands negative indices
+str_dub  #duplicate the characters within a string
+str_trim  #remove leading+tailing whitespace
+str_pad  #pad string with extra whitespace right,left, or both
+
+```
+
+
+```{r Files}
+# Ctrl-Shift-H to choose directory
+# Command-O to open a file
+setwd("~/_Home/R-files Data Analysis/_Johns Toolbox")
+
+#Reading DBF files
+library("foreign", lib.loc="C:/Program Files/R/R-3.0.0/library")
+mydata<-read.dbf(choose.files())
+
+```
+
+
 ```{r Excel}
 # read excel namedRange using RJava
 library(RJava)
@@ -87,18 +166,6 @@ library(cronR)
 # For Windows
 # https://github.com/bnosac/taskscheduleR
 library(taskscheduleR)
-```
-
-
-```{r Files}
-# Ctrl-Shift-H to choose directory
-# Command-O to open a file
-setwd("~/_Home/R-files Data Analysis/_Johns Toolbox")
-
-#Reading DBF files
-library("foreign", lib.loc="C:/Program Files/R/R-3.0.0/library")
-mydata<-read.dbf(choose.files())
-
 ```
 
 
@@ -154,6 +221,20 @@ x.scale<-sweep(x,2,x.max,'/')   #scale by dividing each value by its column maxi
 ```
 
 
+```{r BoxCox}
+# Box Cox  - generate tmp and plot the limits of the lambda interval for transformation
+# Think about the data and choose.  Here interval includes 1/2 so why exclude squareroot?
+set.seed(43)
+tmp <- exp(rnorm(10))
+out <- MASS::boxcox(lm(tmp~1))
+range(out$x[out$y > max(out$y)-qchisq(0.95,1)/2])
+# [1] -0.4646465  1.3131313
+max(out$x[out$y==max(out$y)])
+# [1] 0.3838384
+
+```
+
+
 ```{r Factors to strings}
 #converting strings as sfactors into charactor strings
 df[] <- lapply(df, as.character)
@@ -188,13 +269,16 @@ dev.off()
 
 ```{r NAs Detect,Count,Exclude}
 
+# jvctools::cna()  coount NAs in each column of a dataframe
+cna(df)
+
 #Find NAs Detect, Count or Exclude in our summary
 # *** USING DPLYR ***
 #Here we are reporting or excluding NAs using dplyr
 c<-data(mtcars)
 c[1,6]<-NA #assign this as NA
-#summarise_each applys to each column when no group_by is used
-summarise_each(c,funs(n=sum(!is.na(.))))
+#summarise_all applys to each column when no group_by is used
+summarise_all(c,funs(n=sum(!is.na(.))))
 #   mpg cyl disp hp drat wt qsec vs am gear carb
 # 1  32  32   32 32   32 31   32 32 32   32   32
 #same as the following
@@ -335,33 +419,6 @@ summaryBy(mpg~carb+cyl, data=mtcars, FUN=c(sum,mean,length))
 ```
 
 
-```{r Functions}
-# Functions
-# can be nested (locally) in other functions
-
-# myfunction<-function( arglist ) {
-#   print('do stuff')
-#   return(value)
-# }
-break # exit the statement (i.e. current loop)
-next  # skip to next i (i.e. current loop)
-
-do.call(funname, args)  #executes a function call with args
-
-stopifnot(is.numeric(newdata)) #used to exit a function
-
-# recursion example
-# my.factorial <- function(n) {
-#   if (n == 1) {  # Base case
-#     return(1)
-#   } else {  # Recursion
-#     return(n*my.factorial(n-1))
-#   }
-# }
-
-```
-
-
 ```{r purrr}
 # Using purrr
 # here we use map() to apply a linear model to mtcars split first by cyl {4,6,8}
@@ -373,45 +430,6 @@ split(c,c$cyl) %>% map(~lm(.$mpg~.$wt)) %>% map(~broom::tidy(.))
 c %>% split(.$cyl) %>% map(~ lm(mpg~wt,data=.x)) %>% map(~broom::tidy(.))
 
 dailyModels<-dailyModels %>% mutate(mtd=map_dbl(data,getMTD))
-```
-
-
-```{r Strings}
-# finding rows with substring matching (all rows of the 'Merc' cars in mtcars)
-mtcars[grepl('Merc',rownames(mtcars)),]
-
-substr(x, start=n1, stop=n2) 
-grep(pattern,x, value=FALSE, ignore.case=FALSE, fixed=FALSE)
-grepl(pattern,x, value=FALSE, ignore.case=FALSE, fixed=FALSE)
-sub(pattern, replacement, x, ignore.case=FALSE, fixed=FALSE)
-gsub(pattern, replacement, x, ignore.case=FALSE, fixed=FALSE)
-gregexpr(pattern, text, ignore.case=FALSE, perl=FALSE,
-fixed=FALSE)
-strsplit(x, split)
-paste("a","b", sep="", collapse=NULL)
-sprintf(fmt,"a string")
-toupper/tolower(x)
-nchar(x)
-
-# stringr::
-str_extract #extract first match
-str_extract_all #extract all matches
-str_replace #replace first match
-str_replace_all
-str_split_fixed  #splits into fixed number of substrings
-str_split  #splits into variable number of substrings 
-str_detect  #detect presence or absense of a pattern
-str_match  #captures groups formed by () from first match
-str_match_all  #captures groups formed by () from all matches
-str_locate  #locates the first position of a pattern returns start & end
-str_c #like paste0()
-str_length #like nchar()
-str_sub  #like substr()
-str_str  #like substr but understands negative indices
-str_dub  #duplicate the characters within a string
-str_trim  #remove leading+tailing whitespace
-str_pad  #pad string with extra whitespace right,left, or both
-
 ```
 
 
@@ -487,20 +505,6 @@ cowplot::plot_grid(p1,p2,p3+rremove("x.text"),
 # using gridExtra
 gridExtra::grid.arrange(p1,p1,p3+rremove("x.text"), 
              ncol = 2, nrow = 2)
-
-```
-
-
-```{r BoxCox}
-# Box Cox  - generate tmp and plot the limits of the lambda interval for transformation
-# Think about the data and choose.  Here interval includes 1/2 so why exclude squareroot?
-set.seed(43)
-tmp <- exp(rnorm(10))
-out <- MASS::boxcox(lm(tmp~1))
-range(out$x[out$y > max(out$y)-qchisq(0.95,1)/2])
-# [1] -0.4646465  1.3131313
-max(out$x[out$y==max(out$y)])
-# [1] 0.3838384
 
 ```
 
@@ -633,7 +637,26 @@ fitControl <- trainControl( method = "repeatedcv", number = 4, repeats = 4)
 fit <- train(y ~ ., data = x, method = "gbm", trControl = fitControl,verbose = FALSE)
 predicted= predict(fit,x_test,type= "prob")[,2] 
 
-
 ```
 
+```{r python in R}
+# run python within R
+# python available after library(reticulate)
+library(reticulate)       #defaults to python2.7
+os<-import("os")          #import modules into python
+sys<-import('sys')
+np<-import('numpy')
+os$listdir(".")           #use $ to access funcions in that module
+source_python("test.py")  #to execute a py script in R
+repl_python()             #creates an interactive py session in R
+# > repl_python()         
+# Python 2.7.10 (/usr/bin/python)
+# Reticulate 1.6 REPL -- A Python interpreter in R.
+# >>> x=4+3**2            #py session inside R type exit to quit
+# >>> x
+# 13
+# >>> exit
+# > py$x                  #access those python objects with py$ prefix
+# [1] 13
+```
 
