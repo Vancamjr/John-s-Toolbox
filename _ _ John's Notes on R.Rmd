@@ -9,6 +9,7 @@ Look up by section using the markdown chapter index
 
 ```{r Update R}
 # update to the latest version of R easily
+# https://www.r-project.org/
 
 # Windows:  InstallR package from Tal galilli
 # https://cran.r-project.org/web/packages/installr/installr.pdf
@@ -17,9 +18,9 @@ Look up by section using the markdown chapter index
 # Mac & Linux
 # install.packages("devtools")
 # devtools::install_github("AndreaCirilloAC/updateR")
-# updateR(admin_password = "PASSWORD")
+library(updateR)
+updateR(admin_password = "doodle")
 ```
-
 
 ```{r Packages}
 # set number cores to 2 for faster installation
@@ -28,20 +29,44 @@ options(Ncpus = 2)
 # detach a specific package
 detach('package')
 
-# create list os installed packages
-mypkgs<-as.data.frame(installed.packages(),stringsAsFactors = F)
-readr::write_tsv(mypkgs,"/Users/John/Documents/R/_Johns Toolbox/mypkgs.tsv")         # Mac
-# readr::write_tsv(mypkgs,"C:/Users/jvancamp/Documents/R/_Johns Toolbox/mypkgs.tsv") # Win
+# create list of installed packages
+tmp <- installed.packages() 
+mypkgs.old<- as.vector(tmp[is.na(tmp[,"Priority"]), 1]) 
+save(mypkgs.old,file="mypkgs_old.rda") 
+rm(tmp,mypkgs.old)
 
-# Install packages from a list
-mypkgs<-readr::read_tsv("/Users/John/Documents/R/_Johns Toolbox/mypkgs.tsv")         # Mac
-# mypkgs<-readr::read_tsv("C:/Users/jvancamp/Documents/R/_Johns Toolbox/mypkgs.tsv") # Win
-sapply(mypkgs$Package,function(x) install.packages(x))
+# install missing mackages
+options(Ncpus = 2)
+tmp <- installed.packages() 
+mypkgs.new <- as.vector(tmp[is.na(tmp[,"Priority"]), 1]) 
+load("mypkgs_old.rda") 
+missing <- setdiff(mypkgs.old, mypkgs.new) 
+install.packages(missing) 
+update.packages()
 
+# add github packages
+#devtools::install_github("hoxo-m/githubinstall")
+library(githubinstall)
+load("mypkgs_old.rda") 
+tmp <- installed.packages() 
+mypkgs.new <- as.vector(tmp[is.na(tmp[,"Priority"]), 1]) 
+missing <- setdiff(mypkgs.old, mypkgs.new) 
+for (i in 1:length(missing)) githubinstall(missing[i])
+
+# add bioconductor packages
+chooseBioCmirror() 
+biocLite()  
+load("mypkgs_old.rda") 
+tmp <- installed.packages() 
+mypkgs.new <- as.vector(tmp[is.na(tmp[,"Priority"]), 1]) 
+missing <- setdiff(mypkgs.old, mypkgs.new) 
+for (i in 1:length(missing)) biocLite(missing[i])
+
+# cleanup
+rm(tmp,mypkgs.old,mypkgs.new,missing)
 ```
 
-
-```{r Controls Prgm Flow }
+```{r Prgm Flow Controls }
 # for sometimes fails if no space after "for "
 # if x is data.frame or data.table seq.along(x) defaults along ncols, for nrow specify a column
 for (i in 1:10) {print('do stuff')}  
@@ -68,7 +93,6 @@ setgroups<-Vectorize(setgroups)
 
 ```
 
-
 ```{r Functions}
 # Functions
 # can be nested (locally) in other functions
@@ -94,7 +118,6 @@ stopifnot(is.numeric(newdata)) #used to exit a function
 # }
 
 ```
-
 
 ```{r Strings}
 # finding rows with substring matching (all rows of the 'Merc' cars in mtcars)
@@ -134,6 +157,15 @@ str_pad  #pad string with extra whitespace right,left, or both
 
 ```
 
+```{r date time}
+# library(lubridate)
+# Add or subtract months w/o exceeding last day
+newdate<-mydate %m+% months(1)  
+newdate<-mydate %m-% months(1)  
+# reset day to first of month
+day(newdate)<-1
+
+```
 
 ```{r Files}
 # Ctrl-Shift-H to choose directory
@@ -146,7 +178,6 @@ mydata<-read.dbf(choose.files())
 
 ```
 
-
 ```{r Excel}
 # read excel namedRange using RJava
 library(RJava)
@@ -154,6 +185,28 @@ excelfile <- system.file("test.xlsx", package="XLConnect")
 wb <- loadWorkbook(excelfile)
 data<- readNamedRegion(wb, name="alldata")
 
+# openxlsx manipulate excel
+require(openxlsx)
+wb <- createWorkbook()
+addWorksheet(wb,"MySheet",gridLines = FALSE) #sheet 1
+writeData(wb, 1, df, startRow = 9, startCol = 2, borders = "all")
+saveWorkbook(wb, "filename.xlsx", overwrite = TRUE)
+# many options for formatting
+writeDataTable(wb, 2, df, startRow = 9, startCol = 2, tableStyle = "TableStyleLight9")
+sty <- createStyle(numFmt = "mm/dd/yy")
+addStyle(wb, 1, style = sty, rows = 2:11, cols = 8, gridExpand = TRUE)
+s <- createStyle(numFmt = "0.00")
+s <- createStyle(numFmt = "#,##0")
+addStyle(wb, 1, style = s, rows = 2:6, cols = 3, gridExpand = TRUE)
+conditionalFormatting(wb, "Moving Col", cols=1:2, rows=1:11, 
+                      rule="A$1<0", style = negStyle)
+setColWidths(wb, "colourScale", cols = 1:ncol(df), widths = 1.07)
+setRowHeights(wb, "colourScale", rows = 1:nrow(df), heights = 7.5)
+# insert ggplot
+p1 <- qplot(mpg, data=mtcars, geom="density",
+  fill=as.factor(gear), alpha=I(.5), main="Distribution of Gas Mileage")
+print(p1) #plot needs to be showing
+insertPlot(wb, 1, width = 5, height = 3.5, fileType = "png", units = "in")
 ```
 
 ```{r Scheduler}
@@ -167,7 +220,6 @@ library(cronR)
 # https://github.com/bnosac/taskscheduleR
 library(taskscheduleR)
 ```
-
 
 ```{r Split & sample data}
 #Split data & sample data (1:20 cut into 4 groups)
@@ -212,14 +264,12 @@ detach(newdata)
 
 ```
 
-
 ```{r Rescale Data}
 #scale data with sweep()
 x<-matrix(runif(100,1,2),20)
 x.max<-apply(x,2,function(x) max(x))  #max value of each column
 x.scale<-sweep(x,2,x.max,'/')   #scale by dividing each value by its column maximum
 ```
-
 
 ```{r BoxCox}
 # Box Cox  - generate tmp and plot the limits of the lambda interval for transformation
@@ -234,12 +284,10 @@ max(out$x[out$y==max(out$y)])
 
 ```
 
-
 ```{r Factors to strings}
 #converting strings as sfactors into charactor strings
 df[] <- lapply(df, as.character)
 ```
-
 
 ```{r Redirect Output}
 write.table(x,file="Q3events.txt")   #output dataframe to a file for later use
@@ -266,11 +314,14 @@ plot(x,y)
 dev.off()
 ```
 
-
 ```{r NAs Detect,Count,Exclude}
 
-# jvctools::cna()  coount NAs in each column of a dataframe
+# jvctools::cna() count NAs in each column of a dataframe
 cna(df)
+
+# Complete Cases (eliminate missing data)
+x1 <-x[complete.cases(x),]
+table(complete.cases(x))  #check for complete cases with table 
 
 #Find NAs Detect, Count or Exclude in our summary
 # *** USING DPLYR ***
@@ -321,14 +372,6 @@ x %>% group_by(Species) %>% summarise_each(funs(missing=sum(!complete.cases(.)))
 
 ```
 
-
-```{r Complete Cases}
-# Complete Cases (eliminate missing data)
-x1 <-x[complete.cases(x),]
-table(complete.cases(x))  #check for complete cases with table 
-```
-
-
 ```{r Cumulative probability}
 #cumulative probability where x is the position used in the calculation
 pnorm(x,mean=m, sd=s)
@@ -336,12 +379,14 @@ pnorm(x,mean=m, sd=s)
 data_frame(x=c(1:20)) %>% mdt() %>% .[,cumsum(x)]
 ```
 
-
 ```{r Web files}
 #Read a file using a url
 x<-read.table(url("http://www.stats.uwo.ca/faculty/braun/data/rnf6080.dat"))
-```
 
+# Rvest web scraping examples
+file.edit('/Users/John/Documents/R/explore/dvest -- scraping web data example.Rmd')
+
+```
 
 ```{r Crosstabs & aggregation}
 #creating a crosstab from a subset of data
@@ -415,9 +460,7 @@ x %>% group_by(Species) %>% summarise_each(funs(mean))
 library(doBy)
 str(mtcars)
 summaryBy(mpg~carb+cyl, data=mtcars, FUN=c(sum,mean,length))
-
 ```
-
 
 ```{r purrr}
 # Using purrr
@@ -431,7 +474,6 @@ c %>% split(.$cyl) %>% map(~ lm(mpg~wt,data=.x)) %>% map(~broom::tidy(.))
 
 dailyModels<-dailyModels %>% mutate(mtd=map_dbl(data,getMTD))
 ```
-
 
 ```{r ggplot2 tips & tricks}
 # New title,subtitle,caption
@@ -505,9 +547,7 @@ cowplot::plot_grid(p1,p2,p3+rremove("x.text"),
 # using gridExtra
 gridExtra::grid.arrange(p1,p1,p3+rremove("x.text"), 
              ncol = 2, nrow = 2)
-
 ```
-
 
 ```{r SQL operations}
 # Example of a 1st query into hash table followed by a 2nd query.
@@ -562,7 +602,6 @@ myq<-paste(
 myr <- sqlQuery(fdm,myq)
 myr %>% head()
 odbcClose(fdm)
-
 ```
 
 
@@ -659,4 +698,6 @@ repl_python()             #creates an interactive py session in R
 # > py$x                  #access those python objects with py$ prefix
 # [1] 13
 ```
+
+
 
