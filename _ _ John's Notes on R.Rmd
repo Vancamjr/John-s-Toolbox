@@ -66,7 +66,11 @@ for (i in 1:length(missing)) biocLite(missing[i])
 rm(tmp,mypkgs.old,mypkgs.new,missing)
 ```
 
+<<<<<<< HEAD
 ```{r Prgm Flow Controls }
+=======
+```{r Controls Prgm Flow }
+>>>>>>> 8ac886316d1b7d70fefe37e0002673a4e2796d59
 # for sometimes fails if no space after "for "
 # if x is data.frame or data.table seq.along(x) defaults along ncols, for nrow specify a column
 for (i in 1:10) {print('do stuff')}  
@@ -369,9 +373,17 @@ x %>% group_by(Species) %>% summarise_each(funs(missing=sum(!complete.cases(.)))
 #1     setosa            0           1            0           0
 #2 versicolor            0           0            0           0
 #3  virginica            0           0            0           0
-
 ```
 
+<<<<<<< HEAD
+=======
+```{r Complete Cases}
+# Complete Cases (eliminate missing data)
+x1 <-x[complete.cases(x),]
+table(complete.cases(x))  #check for complete cases with table 
+```
+
+>>>>>>> 8ac886316d1b7d70fefe37e0002673a4e2796d59
 ```{r Cumulative probability}
 #cumulative probability where x is the position used in the calculation
 pnorm(x,mean=m, sd=s)
@@ -383,11 +395,14 @@ data_frame(x=c(1:20)) %>% mdt() %>% .[,cumsum(x)]
 #Read a file using a url
 x<-read.table(url("http://www.stats.uwo.ca/faculty/braun/data/rnf6080.dat"))
 
+<<<<<<< HEAD
 # Rvest web scraping examples
 file.edit('/Users/John/Documents/R/explore/dvest -- scraping web data example.Rmd')
 
 ```
 
+=======
+>>>>>>> 8ac886316d1b7d70fefe37e0002673a4e2796d59
 ```{r Crosstabs & aggregation}
 #creating a crosstab from a subset of data
 xtabs(formula= ~., data=x[,562:563])
