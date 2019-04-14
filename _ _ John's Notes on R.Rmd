@@ -7,18 +7,6 @@ Look up by section using the markdown chapter index
 # rm(list=grep('modelFcst',ls(),value=T))  #remove all objects matching the pattern 'modelFcst'
 ```
 
-```{r Debugger}
-browser() # most common way to invoke debugger
-debug()
-debugonce()
-# c- continue: execute all of the current function
-# n-(or carriage return) - next: step through
-# carriage return- next: step through
-# Q- quit: terminates debugging
-# control-C return to top level - allows you to move among
-# objects() is especially useful
-```
-
 ```{r Update R}
 # update to the latest version of R easily
 # https://www.r-project.org/
@@ -94,9 +82,6 @@ while(cond) expr
 repeat expr
 ifelse(test, yes, no)
 
-# does a better job handling all functional outputs
-if(isTRUE()){}
-
 # ifelse
 # setgroups<-function(MRRid){
 #   ifelse(MRRid %in% c(28),rgroup<-'Starting MRR',
@@ -105,6 +90,7 @@ if(isTRUE()){}
 #     rgroup<-"")))
 #   return(rgroup)
 # }
+
 # vectorize a function
 setgroups<-Vectorize(setgroups)
 
@@ -188,73 +174,6 @@ library(tsbox)
 # tseries: Time Series Analysis and Computational Finance
 library(tseries)
 ```
-
-```{r execution time}
-# 1. Using Sys.time
-# The run time of a chunk of code can be measured by taking the difference between the time at 
-# the start and at the end of the code chunk. Simple yet flexible :sunglasses:.
-sleep_for_a_minute <- function() { Sys.sleep(60) }
-start_time <- Sys.time()
-sleep_for_a_minute()
-end_time <- Sys.time()
-end_time - start_time
-
-# 2. Library tictoc
-# The functions tic and toc are used in the same manner for benchmarking as the just 
-# demonstrated Sys.time. However tictoc adds a lot more convenience to the whole.
-# One can time a single code chunk:
-library(tictoc)
-tic("sleeping")
-print("falling asleep...")
-sleep_for_a_minute()
-print("...waking up")
-toc()
-# [1] "falling asleep..."
-# [1] "...waking up"
-# sleeping: 60.026 sec elapsed
-
-# 3. Using system.time
-# One can time the evaluation of an R expression using system.time. For example, we can use it 
-# to measure the execution time of the function sleep_for_a_minute (defined above) as follows.
-system.time({ sleep_for_a_minute() })
-#   user  system elapsed
-#  0.004   0.000  60.051
-
-# 4. Library rbenchmark
-# The documentation to the function benchmark from the rbenchmark R package describes it as “a 
-# simple wrapper around system.time”. However it adds a lot of convenience compared to bare 
-# system.time calls. For example it requires just one benchmark call to time multiple 
-# replications of multiple expressions. Additionally the returned results are conveniently 
-# organized in a data frame.
-
-library(rbenchmark)
-benchmark("lm" = {
-            X <- matrix(rnorm(1000), 100, 10)
-            y <- X %*% sample(1:10, 10) + rnorm(100)
-            b <- lm(y ~ X + 0)$coef
-          },
-          "pseudoinverse" = {
-            X <- matrix(rnorm(1000), 100, 10)
-            y <- X %*% sample(1:10, 10) + rnorm(100)
-            b <- solve(t(X) %*% X) %*% t(X) %*% y
-          },
-          "linear system" = {
-            X <- matrix(rnorm(1000), 100, 10)
-            y <- X %*% sample(1:10, 10) + rnorm(100)
-            b <- solve(t(X) %*% X, t(X) %*% y)
-          },
-          replications = 1000,
-          columns = c("test", "replications", "elapsed",
-                      "relative", "user.self", "sys.self"))
-
-#            test replications elapsed relative user.self sys.self
-# 3 linear system         1000   0.167    1.000     0.208    0.240
-# 1            lm         1000   0.930    5.569     0.952    0.212
-# 2 pseudoinverse         1000   0.240    1.437     0.332    0.612
-
-
-```
-
 
 ```{r Files}
 # Ctrl-Shift-H to choose directory
@@ -632,9 +551,6 @@ scale_fill_discrete(guide = guide_legend(reverse=TRUE))
 # discrete 	  Discrete values (e.g., colors, shapes, line, sizes)
 # continuous 	Continuous values (e.g., alpha, colors, point sizes)
 
-# number of columns in legend (assign to correct guide object)
-guides(color=guide_legend(ncol=2))
-
 # Now left aligned center by using
 p+ggcl()  # function in jvctools
 theme(plot.title = element_text(hjust = 0.5))
@@ -661,22 +577,17 @@ p+theme(plot.title = element_text(
 # Publication ready plots with ggpubr
 library(ggpubr)
 
-# patchwork  install_github("thomasp85/patchwork")
-# layout for combining multiple plots 
-# + adds to element, - adds as new element 
-# | besides / over operators for single column/row operations
-#where
-library(patchwork)
-p1 <- ggplot(mtcars) + geom_point(aes(mpg, disp))
-p2 <- ggplot(mtcars) + geom_boxplot(aes(gear, disp, group = gear))
-p3 <- ggplot(mtcars) + geom_smooth(aes(disp, qsec))
-p4 <- ggplot(mtcars) + geom_bar(aes(carb))
-p5 <- ggplot(mtcars) + geom_violin(aes(cyl, mpg, group = cyl))
-p1+(p2/p3)+p4 +plot_layout(ncol=2)
-p1-(p2/p3)+p4+p5 +plot_layout(ncol=2)
-rm(p1,p2,p3,p4,p5)
-
-# also see cowplot
+# Arrange multiple plots on a page [example: p1,p2,p3]
+# using ggpubr
+ggpubr::ggarrange(p1,p2,p3+rremove("x.text"),
+              labels = c("A","B","C"),nrow=2,ncol=2)
+# using cowplot
+cowplot::plot_grid(p1,p2,p3+rremove("x.text"), 
+          labels = c("A", "B", "C"),
+          ncol = 2, nrow = 2)
+# using gridExtra
+gridExtra::grid.arrange(p1,p1,p3+rremove("x.text"), 
+             ncol = 2, nrow = 2)
 ```
 
 ```{r SQL operations}
