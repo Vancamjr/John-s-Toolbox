@@ -23,11 +23,29 @@ updateR(admin_password = "doodle")
 ```
 
 ```{r Packages}
+# setwd('/Users/John/Documents/R')  
+# Version & Package Path:  /Library/Frameworks/R.framework/Versions/3.6
+
+# Detatch all packages leaving only base
+# devtools::install_github("romainfrancois/nothing")
+# require(nothing, quietly = TRUE)
+sort(loadedNamespaces())
+
+# base packages when only base is loaded 
+basePkgs<-c("base","compiler","datasets","digest","evaluate","graphics","grDevices","htmltools","knitr","methods","rlang","rmarkdown","stats","tools","utils","xfun","yaml")
+
 # set number cores to 2 for faster installation
 options(Ncpus = 2)
 
+# install JVCTOOLS from github
+# if this fails comment out library('jvctools') from .Rprofile to prevent errors
+# then restore once packages are updated. 
+install.packages("devtools")
+devtools::install_github("Vancamjr/jvctools")
+library(jvctools)
+
 # detach a specific package
-detach('package')
+# detach('package')
 
 # create list of installed packages
 tmp <- installed.packages() 
@@ -157,6 +175,13 @@ str_dub  #duplicate the characters within a string
 str_trim  #remove leading+tailing whitespace
 str_pad  #pad string with extra whitespace right,left, or both
 
+#glue use to build sql querries or strings of all kinds
+library(glue)
+glue("this","that",.sep = '; ')
+glue("My name is: {name}")
+glue_data()
+glue_sql()
+
 ```
 
 ```{r date time}
@@ -189,6 +214,13 @@ mydata<-read.dbf(choose.files())
 ```{r data.table}
 dt<-mdt(mtcars)
 
+# convert all factors to character
+dt %<>% mutate_if(is.factor, as.character)
+
+# delete a column
+dt[,"foo":=NULL]
+dt[, c("foo","bar"):=NULL]  # remove two columns
+
 #sorted list of unique values
 mt[order(cyl,gear)][,.(gears=.(unique(gear))),by=cyl]
 #draw second item from the lists of gears
@@ -203,8 +235,13 @@ mt[,`:=`(avg=NULL,med=NULL,min=NULL)]
 mt[,mpg_lag1:=shift(mpg, 1)]
 mt[,mpg_forward1:=shift(mpg, 1, type='lead')]
 
-#internal variables .I(row index), .N(counts in group), .GRP(group index)
+#sorting
+mt[order(cyl)]  #assending
+mt[order(-cyl)] #desending
+
+#internal variables .I(row index), .N(counts in group), .GRP(group index) .SD(all data)
 mt[order(cyl)][,.(group=.GRP,counts=.N,"id's"=.(unique(.I))),keyby=cyl]
+
 
 #perform a series of calcns retaining the last value only
 mt[,.(dmpg={tmp1=mean(mpg); tmp2=round(mean(abs(mpg-tmp1)),2)}),keyby=cyl]
@@ -582,12 +619,20 @@ library(ggpubr)
 ggpubr::ggarrange(p1,p2,p3+rremove("x.text"),
               labels = c("A","B","C"),nrow=2,ncol=2)
 # using cowplot
+library(cowplot)
 cowplot::plot_grid(p1,p2,p3+rremove("x.text"), 
           labels = c("A", "B", "C"),
           ncol = 2, nrow = 2)
 # using gridExtra
 gridExtra::grid.arrange(p1,p1,p3+rremove("x.text"), 
              ncol = 2, nrow = 2)
+
+# ggplot2 get scale limits of ggplot object
+xmin<-layer_scales(p)$x$range$range[1]
+xmax<-layer_scales(p)$x$range$range[2]
+ymin<-layer_scales(p)$y$range$range[1]
+ymax<-layer_scales(p)$y$range$range[2]
+
 ```
 
 ```{r SQL operations}
