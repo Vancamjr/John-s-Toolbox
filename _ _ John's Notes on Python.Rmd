@@ -1,0 +1,70 @@
+---
+title: "John's Notes on Python"
+author: "John Van Camp"
+date: "11/11/2020"
+output: html_document
+---
+Using Reticulate using Python3.6 
+<https://blog.rstudio.com/2018/03/26/reticulate-r-interface-to-python/>
+```{r Reticulate Python3.6, include=FALSE}
+
+library(reticulate)       #defaults to python2.7
+use_python('/Library/Frameworks/Python.framework/Versions/3.6/bin/python3')
+
+# verify verson with sys package
+sys<-import('sys')
+sys$version
+
+# Run a python script
+source_python("test.py")
+
+# Install package
+py_install("pandas")
+
+# Import & Use Packages
+os<-import("os")
+np<-import('numpy')
+pd<-import('pandas')
+# access components with "$" not "."
+# Create the pandas DataFrame from R data.frame
+data = data_frame(names=c('tom','nick','juli'),num=c(10, 15,14)) 
+df = pd$DataFrame(data) 
+```
+
+Create & use interactive session in R
+```{r Interactive Python}
+# create interactive python3 session in RStudio
+repl_python()
+# use exit to end session
+```
+
+Python Code Block
+```{python Python3.6 Code blocks}
+# We can write & execute python code directly in code blocks
+# these can be mixed into R code blocks and used together
+
+from pydataset import data  #import python data
+data()
+cake=data('cake')
+cake.info()
+```
+
+Move data between R and Python
+```{r Passing Data}
+# Pass data between Python & R using prefixs 
+# py$<name> r$<name>
+
+py$cake %>% head()  #pass the cake dataset from python to R
+
+# Reticulate transforms automatically objects in Python to objects in R:
+# R 	                    Python 	Examples
+# Single-element vector 	Scalar 	1, 1L, TRUE, “foo”
+# Multi-element vector 	  List 	  c(1.0, 2.0, 3.0), c(1L, 2L, 3L)
+# List of multiple types 	Tuple 	list(1L, TRUE, “foo”)
+# Named list 	            Dict 	  list(a = 1L, b = 2.0), dict(x = x_data)
+# Matrix/Array 	          NumPy   ndarray 	matrix(c(1,2,3,4), nrow = 2, ncol = 2)
+# Data Frame 	            Pandas  DataFrame 	data.frame(x = c(1,2,3), y = c(“a”, “b”, “c”))
+# Function 	              Python  function 	function(x) x + 1
+# NULL, TRUE, FALSE 	    None,   True, False 	NULL, TRUE, FALSE
+```
+

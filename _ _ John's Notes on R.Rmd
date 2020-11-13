@@ -402,7 +402,7 @@ c[1,6]<-NA #assign this as NA
 summarise_all(c,funs(n=sum(!is.na(.))))
 #   mpg cyl disp hp drat wt qsec vs am gear carb
 # 1  32  32   32 32   32 31   32 32 32   32   32
-#same as the following
+#same as the following  hint: c must be a dataframe or datatable
 c %>% summarise_each(.,funs(n=sum(is.na(.))))
 #   mpg cyl disp hp drat wt qsec vs am gear carb
 # 1   0   0    0  0    0  1    0  0  0    0    0
@@ -767,24 +767,25 @@ predicted= predict(fit,x_test,type= "prob")[,2]
 ```
 
 ```{r python in R}
-# run python within R
+# run python3 within R
 # python available after library(reticulate)
 library(reticulate)       #defaults to python2.7
-os<-import("os")          #import modules into python
+use_python('/Library/Frameworks/Python.framework/Versions/3.6/bin/python3')
+
+# verify verson with sys package
 sys<-import('sys')
-np<-import('numpy')
-os$listdir(".")           #use $ to access funcions in that module
+sys$version
+# import & use os package
+os<-import("os")
 source_python("test.py")  #to execute a py script in R
-repl_python()             #creates an interactive py session in R
-# > repl_python()         
-# Python 2.7.10 (/usr/bin/python)
-# Reticulate 1.6 REPL -- A Python interpreter in R.
-# >>> x=4+3**2            #py session inside R type exit to quit
-# >>> x
-# 13
-# >>> exit
-# > py$x                  #access those python objects with py$ prefix
-# [1] 13
+# usual python packages
+np<-import('numpy')
+pd<-import('pandas')
+# run a script
+source_python("test.py")
+# create interactive python3 session
+repl_python()
+
 ```
 
 
